@@ -1,5 +1,8 @@
 package com.github.zastai.apiref.commandline;
 
+import com.github.zastai.apiref.internal.ClassPath;
+import com.github.zastai.apiref.internal.PathUtil;
+import com.github.zastai.apiref.model.JavaApplication;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,8 +87,27 @@ public final class Program {
     if (args.length - idx < 2) {
       return Program.usage(1);
     }
-    // TODO: Scan the further arguments (jars, classes and/or directories) for stuff to document.
-    idx = args.length - 1;
+    final JavaApplication application;
+    try (final ClassPath classPath = new ClassPath()) {
+      // TODO: configure the classpath, especially for things like annotations that mark something as not being part of public API.
+      classPath.setVerbose(verbose);
+      while (idx + 1 < args.length) {
+        try {
+          final var jarOrFolder = Path.of(args[idx]).toAbsolutePath().normalize();
+          if (PathUtil.isJarFile(jarOrFolder) || PathUtil.isDirectory(jarOrFolder)) {
+            classPath.add(jarOrFolder);
+          }
+          else {
+            return Program.fail(2, "Input is neither a folder nor a jar file: %s%n", jarOrFolder);
+          }
+        }
+        catch (IOException e) {
+          return Program.fail(2, "Failed to locate class files in %s: %s%n", args[idx], e);
+        }
+        ++idx;
+      }
+      application = classPath.buildApplication();
+    }
     final Path referencePath;
     if ("-".equals(args[idx])) {
       referencePath = null;
