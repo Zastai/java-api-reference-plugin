@@ -224,7 +224,7 @@ public final class ClassPath implements AutoCloseable {
           System.out.printf("[warning] Skipping %s because it is a module which contains no module information.%n", cn.name);
           return;
         }
-        if (!cn.name.endsWith("/module-info")) {
+        if (!cn.name.endsWith("/" + WellKnown.Names.MODULE_INFO)) {
           System.out.printf("[warning] Found module in %s but would have expected that to be called 'module-info'.%n", cn.name);
         }
         // No other reason to exclude a module - we need to document it even if it has no annotations or contents.
@@ -232,7 +232,8 @@ public final class ClassPath implements AutoCloseable {
         // For now, we assume there is no need to treat module-info as versioned.
         ignoreVersion = true;
       }
-      else if (cn.name.endsWith("/package-info")) { // FIXME: Is there another way to detect a package-info pseudo-class?
+      // FIXME: Is there another way to detect a package-info pseudo-class?
+      else if (cn.name.endsWith("/" + WellKnown.Names.PACKAGE_INFO)) {
         // We currently only care about any annotations that may be set on the package. Their (run-time) visibility does not matter.
         // FIXME: Do we need to check both regular and type annotations here?
         if (!ASMUtil.isAnnotated(cn)) {

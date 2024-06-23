@@ -14,10 +14,4 @@ public interface Constants {
   /** The ASM API version to use. */
   int API_VERSION = Opcodes.ASM9;
 
-  /** The name of the "module info" pseudo-class. */
-  String MODULE_INFO = "module-info";
-
-  /** The name of the "package info" pseudo-class. */
-  String PACKAGE_INFO = "package-info";
-
 }
