@@ -36,6 +36,10 @@ public interface WellKnown {
     @NotNull
     String ANNOTATION = Type.getInternalName(Annotation.class);
 
+    /** The special method name used for constructors. */
+    @NotNull
+    String CONSTRUCTOR = "<init>";
+
     /** The (internal) type name for {@link Enum}. */
     @NotNull
     String ENUM = Type.getInternalName(Enum.class);
