@@ -16,6 +16,18 @@ import java.nio.file.Path;
 public interface ASMUtil {
 
   /**
+   * Returns a type descriptor for the given internal type name.
+   *
+   * @param name An internal type name (i.e. "java/lang/Object" rather than "java.lang.Object").
+   *
+   * @return The corresponding type descriptor.
+   */
+  @NotNull
+  static String descriptorForName(@NotNull String name) {
+    return "L%s;".formatted(name);
+  }
+
+  /**
    * Determines whether a given class has any associated annotations (runtime-visible or otherwise).
    *
    * @param cn The class to check.
