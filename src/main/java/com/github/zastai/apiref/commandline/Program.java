@@ -1,5 +1,7 @@
 package com.github.zastai.apiref.commandline;
 
+import com.github.zastai.apiref.formatters.JavaFormatter;
+import com.github.zastai.apiref.formatters.MarkDownFormatter;
 import com.github.zastai.apiref.internal.ClassPath;
 import com.github.zastai.apiref.internal.PathUtil;
 import com.github.zastai.apiref.model.JavaApplication;
@@ -12,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.function.BiConsumer;
 
 /** A command-line tool for running Java API extraction. */
 public final class Program {
@@ -42,6 +45,7 @@ public final class Program {
     if (args == null) {
       return Program.usage(1);
     }
+    BiConsumer<PrintStream, JavaApplication> format = JavaFormatter::formatPublicApi;
     boolean verbose = false;
     var idx = 0;
     for (; idx < args.length; ++idx) {
@@ -67,8 +71,8 @@ public final class Program {
           return Program.fail(4, "No output format specified (should be 'java' or 'markdown').%n");
         }
         switch (value.toLowerCase(Locale.ROOT)) {
-          case "java" -> { /* TODO: Set up formatter */ }
-          case "markdown" -> { /* TODO: Set up formatter */ }
+          case "java" -> format = JavaFormatter::formatPublicApi;
+          case "markdown" -> format = MarkDownFormatter::formatPublicApi;
           default -> {
             return Program.fail(4, "Unsupported output format '%s' specified (should be 'java' or 'markdown').%n", value);
           }
@@ -120,7 +124,7 @@ public final class Program {
       }
     }
     try (final PrintStream reference = Program.openReferenceFile(referencePath)) {
-      // TODO
+      format.accept(reference, application);
     }
     catch (IOException e) {
       return Program.fail(16, "Failed to generate reference code: %s%n", e);
