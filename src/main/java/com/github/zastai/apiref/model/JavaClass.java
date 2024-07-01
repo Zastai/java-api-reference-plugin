@@ -28,6 +28,7 @@ public class JavaClass {
   @NotNull
   public final String fullName;
 
+  /** The (externally visible) methods provided by the class. */
   @NotNull
   public final Collection<MethodNode> methods;
 

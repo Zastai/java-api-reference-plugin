@@ -69,6 +69,7 @@
         <configuration>
           <doclint>all</doclint>
           <excludePackageNames>test:*.internal:*.internal.*</excludePackageNames>
+          <failOnWarnings>true</failOnWarnings>
         </configuration>
         <executions>
           <execution>
@@ -76,7 +77,6 @@
               <goal>jar</goal>
             </goals>
             <id>build-javadoc-jar</id>
-            <phase>package</phase>
           </execution>
         </executions>
       </plugin>

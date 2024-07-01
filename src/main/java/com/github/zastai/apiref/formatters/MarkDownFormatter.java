@@ -10,6 +10,11 @@ import java.io.PrintStream;
 /** A class for formatting a Java application's (public) API as MarkDown (with Java pseudocode blocks). */
 public class MarkDownFormatter extends JavaFormatter {
 
+  /**
+   * Creates a new MarkDown-with-Java formatter.
+   *
+   * @param out The stream that should receive the formatted output.
+   */
   protected MarkDownFormatter(@NotNull PrintStream out) {
     super(out);
   }

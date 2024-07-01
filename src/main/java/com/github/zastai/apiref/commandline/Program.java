@@ -19,6 +19,8 @@ import java.util.function.BiConsumer;
 /** A command-line tool for running Java API extraction. */
 public final class Program {
 
+  private Program() { }
+
   private static void info(@NotNull String message) {
     System.out.println(message);
   }
