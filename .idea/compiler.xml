@@ -6,13 +6,8 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="java-api-reference" />
+        <module name="java-api-reference-plugin" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="java-api-reference.command-line" target="11" />
-      <module name="java-api-reference.core" target="11" />
-      <module name="java-api-reference.maven-plugin" target="11" />
-    </bytecodeTargetLevel>
   </component>
 </project>
