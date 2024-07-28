@@ -4,6 +4,7 @@ import com.github.zastai.apiref.internal.ASMUtil;
 import com.github.zastai.apiref.internal.Constants;
 import com.github.zastai.apiref.internal.Util;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
@@ -12,6 +13,8 @@ import org.objectweb.asm.tree.MethodNode;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /** A Java class. */
 public class JavaClass {
@@ -22,7 +25,7 @@ public class JavaClass {
 
   /** The (externally visible) fields provided by the class. */
   @NotNull
-  public final Collection<FieldNode> fields;
+  public final SortedSet<FieldNode> fields;
 
   /** The full (internal) name of this class, including a package specification. */
   @NotNull
@@ -30,7 +33,7 @@ public class JavaClass {
 
   /** The (externally visible) methods provided by the class. */
   @NotNull
-  public final Collection<MethodNode> methods;
+  public final SortedSet<MethodNode> methods;
 
   /** The name of this class. */
   @NotNull
@@ -62,18 +65,46 @@ public class JavaClass {
       this.name = ASMUtil.stripPackage(cn.name);
     }
     if (cn.fields != null) {
-      this.fields = cn.fields.stream().filter(fn -> JavaClass.isRelevant(cn, fn, verbose)).toList();
+      this.fields = new TreeSet<>(JavaClass::compare);
+      cn.fields.stream().filter(fn -> JavaClass.isRelevant(cn, fn, verbose)).forEach(this.fields::add);
     }
     else {
-      this.fields = Collections.emptyList();
+      this.fields = Collections.emptySortedSet();
     }
     if (cn.methods != null) {
-      // FIXME: Maybe we need/want a JavaMethod class, to group overloads together?
-      this.methods = cn.methods.stream().filter(mn -> JavaClass.isRelevant(cn, mn, verbose)).toList();
+      this.methods = new TreeSet<>(JavaClass::compare);
+      cn.methods.stream().filter(mn -> JavaClass.isRelevant(cn, mn, verbose)).forEach(this.methods::add);
     }
     else {
-      this.methods = Collections.emptyList();
+      this.methods = Collections.emptySortedSet();
     }
+  }
+
+  private static int compare(@NotNull FieldNode a, @NotNull FieldNode b) {
+    return JavaClass.compare(a.name, b.name, a.signature, b.signature, a.desc, b.desc);
+  }
+
+  private static int compare(@NotNull MethodNode a, @NotNull MethodNode b) {
+    return JavaClass.compare(a.name, b.name, a.signature, b.signature, a.desc, b.desc);
+  }
+
+  private static int compare(@NotNull String name1, @NotNull String name2, @Nullable String signature1, @Nullable String signature2,
+                             @NotNull String desc1, @NotNull String desc2) {
+    int cmp = name1.compareTo(name2);
+    // FIXME: The extended comparisons should perhaps use a sorting that matches the formatted form; on the other hand, this should
+    //        remain consistent in its results.
+    if (cmp == 0) {
+      if (signature1 != null) {
+        cmp = signature2 == null ? 1 : signature1.compareTo(signature2);
+      }
+      else if (signature2 != null) {
+        cmp = -1;
+      }
+    }
+    if (cmp == 0) {
+      cmp = desc1.compareTo(desc2);
+    }
+    return cmp;
   }
 
   private static boolean isRelevant(@NotNull ClassNode cn, @NotNull FieldNode fn, boolean verbose) {
