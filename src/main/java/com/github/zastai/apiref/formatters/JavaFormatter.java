@@ -2,16 +2,16 @@ package com.github.zastai.apiref.formatters;
 
 import com.github.zastai.apiref.internal.ASMUtil;
 import com.github.zastai.apiref.internal.Constants;
-import com.github.zastai.apiref.signatures.ClassSignature;
-import com.github.zastai.apiref.signatures.FieldSignature;
-import com.github.zastai.apiref.signatures.FormalTypeParameter;
-import com.github.zastai.apiref.signatures.MethodSignature;
-import com.github.zastai.apiref.signatures.TypeReference;
 import com.github.zastai.apiref.internal.WellKnown;
 import com.github.zastai.apiref.model.JavaApplication;
 import com.github.zastai.apiref.model.JavaClass;
 import com.github.zastai.apiref.model.JavaModule;
 import com.github.zastai.apiref.model.JavaPackage;
+import com.github.zastai.apiref.signatures.ClassSignature;
+import com.github.zastai.apiref.signatures.FieldSignature;
+import com.github.zastai.apiref.signatures.FormalTypeParameter;
+import com.github.zastai.apiref.signatures.MethodSignature;
+import com.github.zastai.apiref.signatures.TypeReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
@@ -28,6 +28,11 @@ import java.util.List;
 /** A class for formatting a Java application's (public) API as Java pseudocode. */
 public class JavaFormatter extends CodeFormatter {
 
+  /**
+   * Creates a new Java formatter.
+   *
+   * @param out The stream that should receive the formatted output.
+   */
   protected JavaFormatter(@NotNull PrintStream out) {
     super(out);
   }
@@ -203,7 +208,7 @@ public class JavaFormatter extends CodeFormatter {
   @Override
   protected void writeClassFooter(@NotNull JavaClass jc) {
     this.out.println();
-    this.undent();
+    this.outdent();
     this.writeIndent();
     this.out.print('}');
     this.out.println();
@@ -307,24 +312,24 @@ public class JavaFormatter extends CodeFormatter {
   }
 
   @Override
-  protected void writeField(@NotNull FieldNode field) {
+  protected void writeField(@NotNull FieldNode fn) {
     this.out.println();
     this.writeIndent();
-    if (field.access == Constants.ACC_ENUM_VALUE) {
-      this.out.print(field.name);
+    if (fn.access == Constants.ACC_ENUM_VALUE) {
+      this.out.print(fn.name);
       this.out.println(",");
       return;
     }
-    this.writeMemberAccess(field.access);
-    if (field.signature != null) {
-      final var signature = FieldSignature.decode(field.signature);
+    this.writeMemberAccess(fn.access);
+    if (fn.signature != null) {
+      final var signature = FieldSignature.decode(fn.signature);
       this.writeTypeName(signature.type);
     }
     else {
-      this.writeTypeName(field.desc);
+      this.writeTypeName(fn.desc);
     }
     this.out.print(' ');
-    this.out.print(field.name);
+    this.out.print(fn.name);
     this.out.println(";");
   }
 
@@ -428,18 +433,18 @@ public class JavaFormatter extends CodeFormatter {
   }
 
   @Override
-  protected void writeMethod(@NotNull MethodNode method) {
+  protected void writeMethod(@NotNull MethodNode mn) {
     this.out.println();
     this.writeIndent();
     final boolean varargs;
     {
-      int access = method.access;
-      varargs = (method.access & Opcodes.ACC_VARARGS) != 0;
+      int access = mn.access;
+      varargs = (mn.access & Opcodes.ACC_VARARGS) != 0;
       access &= ~Opcodes.ACC_VARARGS;
       this.writeMemberAccess(access);
     }
-    if (method.signature != null) {
-      final var signature = MethodSignature.decode(method.signature);
+    if (mn.signature != null) {
+      final var signature = MethodSignature.decode(mn.signature);
       if (signature.typeParameters != null) {
         this.writeTypeParameters(signature.typeParameters);
         this.out.print(' ');
@@ -447,7 +452,7 @@ public class JavaFormatter extends CodeFormatter {
       // TODO: Handle annotations on the return type.
       this.writeTypeName(signature.returnType);
       this.out.print(' ');
-      this.writeMethodName(method.name);
+      this.writeMethodName(mn.name);
       this.out.print('(');
       if (signature.parameterTypes != null) {
         for (var i = 0; i < signature.parameterTypes.length; ++i) {
@@ -471,7 +476,7 @@ public class JavaFormatter extends CodeFormatter {
       }
     }
     else {
-      final var returnType = Type.getReturnType(method.desc);
+      final var returnType = Type.getReturnType(mn.desc);
       if (returnType != null) {
         // TODO: Handle annotations on the return type.
         this.writeTypeName(returnType);
@@ -480,9 +485,9 @@ public class JavaFormatter extends CodeFormatter {
         throw new IllegalStateException("Method descriptor did not include a return type.");
       }
       this.out.print(' ');
-      this.writeMethodName(method.name);
+      this.writeMethodName(mn.name);
       this.out.print('(');
-      final var parameterTypes = Type.getArgumentTypes(method.desc);
+      final var parameterTypes = Type.getArgumentTypes(mn.desc);
       if (parameterTypes.length > 0) {
         // FIXME: If the parameter names are available, should we include them?
         // TODO: Handle annotations on the parameters.
@@ -494,9 +499,9 @@ public class JavaFormatter extends CodeFormatter {
         }
       }
       this.out.print(')');
-      if (method.exceptions != null) {
+      if (mn.exceptions != null) {
         String separator = " throws ";
-        for (final var exception : method.exceptions) {
+        for (final var exception : mn.exceptions) {
           this.out.print(separator);
           this.writeTypeName(ASMUtil.descriptorForName(exception));
           separator = ", ";
@@ -524,7 +529,7 @@ public class JavaFormatter extends CodeFormatter {
   @Override
   protected void writePackageFooter(@NotNull JavaPackage jp) {
     this.out.println();
-    this.undent();
+    this.outdent();
     this.writeIndent();
     this.out.print('}');
     this.out.println();
@@ -543,6 +548,11 @@ public class JavaFormatter extends CodeFormatter {
     this.indent();
   }
 
+  /**
+   * Writes out the name of a Java package.
+   *
+   * @param jp The Java package.
+   */
   protected void writePackageName(@NotNull JavaPackage jp) {
     this.out.print(jp.name.replace('/', '.'));
   }
@@ -563,7 +573,7 @@ public class JavaFormatter extends CodeFormatter {
     this.writeTypeName(type);
   }
 
-  private void writeTypeArguments(TypeReference @NotNull... types) {
+  private void writeTypeArguments(TypeReference @NotNull ... types) {
     this.out.print('<');
     var first = true;
     for (final var type : types) {

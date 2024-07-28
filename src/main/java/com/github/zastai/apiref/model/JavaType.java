@@ -66,7 +66,8 @@ public class JavaType {
   /**
    * Adds a class to this type.
    *
-   * @param cn The class to add.
+   * @param cn      The class to add.
+   * @param verbose Indicates whether verbose output should be enabled.
    */
   public void addClass(@NotNull ClassNode cn, boolean verbose) {
     if (!Objects.equals(cn.name, this.fullName)) {
