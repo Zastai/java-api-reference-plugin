@@ -48,6 +48,19 @@ public class JavaFormatter extends CodeFormatter {
     formatter.writePublicApi(application);
   }
 
+  private void maybeWriteParameterName(@NotNull MethodNode mn, int i) {
+    if (mn.localVariables == null) {
+      return;
+    }
+    final var parameterStart = (mn.access & Opcodes.ACC_STATIC) != 0 ? 0 : 1;
+    if (mn.localVariables.size() < parameterStart + i) {
+      return;
+    }
+    final var parameterVariable = mn.localVariables.get(parameterStart + i);
+    this.out.print(' ');
+    this.out.print(parameterVariable.name);
+  }
+
   @Override
   protected void writeAnnotation(@NotNull AnnotationNode an) {
     this.out.print('@');
@@ -461,7 +474,7 @@ public class JavaFormatter extends CodeFormatter {
           }
           // TODO: Handle annotations on the parameters.
           this.writeTypeName(signature.parameterTypes[i], varargs && i == signature.parameterTypes.length - 1);
-          // FIXME: If the parameter names are available, should we include them?
+          this.maybeWriteParameterName(mn, i);
         }
       }
       this.out.print(')');
@@ -489,13 +502,13 @@ public class JavaFormatter extends CodeFormatter {
       this.out.print('(');
       final var parameterTypes = Type.getArgumentTypes(mn.desc);
       if (parameterTypes.length > 0) {
-        // FIXME: If the parameter names are available, should we include them?
         // TODO: Handle annotations on the parameters.
         for (var i = 0; i < parameterTypes.length; ++i) {
           if (i > 0) {
             this.out.print(", ");
           }
           this.writeTypeName(parameterTypes[i], varargs && i == parameterTypes.length - 1);
+          this.maybeWriteParameterName(mn, i);
         }
       }
       this.out.print(')');
