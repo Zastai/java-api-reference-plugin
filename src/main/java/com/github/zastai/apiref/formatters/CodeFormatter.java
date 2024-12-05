@@ -181,6 +181,26 @@ public abstract class CodeFormatter {
   }
 
   /**
+   * Writes out the annotations attached to a field.
+   *
+   * @param fn The node for the field.
+   */
+  protected void writeAnnotations(@NotNull FieldNode fn) {
+    this.writeAnnotations(fn.visibleAnnotations);
+    this.writeAnnotations(fn.invisibleAnnotations);
+  }
+
+  /**
+   * Writes out the annotations attached to a method.
+   *
+   * @param mn The node for the method.
+   */
+  protected void writeAnnotations(@NotNull MethodNode mn) {
+    this.writeAnnotations(mn.visibleAnnotations);
+    this.writeAnnotations(mn.invisibleAnnotations);
+  }
+
+  /**
    * Writes out a class; this consists of a header (via {@link #writeClassHeader(JavaClass)}), its contents (via
    * {@link #writeClassContents(JavaClass)}), and a footer (via {@link #writeClassFooter(JavaClass)}).
    *

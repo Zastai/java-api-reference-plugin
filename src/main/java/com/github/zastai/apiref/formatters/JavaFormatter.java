@@ -147,10 +147,6 @@ public class JavaFormatter extends CodeFormatter {
       }
     }
     // First mask off some that are not written as part of the access modifiers
-    if ((access & Opcodes.ACC_SUPER) != 0) {
-      // This will probably be set on every single type other than Object itself
-      access &= ~Opcodes.ACC_SUPER;
-    }
     if ((access & Opcodes.ACC_INTERFACE) != 0) {
       if ((access & Opcodes.ACC_ANNOTATION) != 0) {
         type = "@interface";
@@ -173,6 +169,8 @@ public class JavaFormatter extends CodeFormatter {
       access &= ~Opcodes.ACC_FINAL; // implied
       type = "record";
     }
+    // This will probably be set on every single type other than Object itself
+    access &= ~Opcodes.ACC_SUPER;
     // Now check for access modifiers that apply to a class
     if ((access & Opcodes.ACC_PUBLIC) != 0) {
       this.out.print("public ");
@@ -186,6 +184,9 @@ public class JavaFormatter extends CodeFormatter {
       this.out.print("protected ");
       access &= ~Opcodes.ACC_PROTECTED;
     }
+    // The deprecated status is assumed to be marked via @Deprecated, which is emitted separately. Alternatively, we could also
+    // adjust the annotation handling to not emit @Deprecated, and instead emit a fake 'deprecated' keyword here.
+    access &= ~Opcodes.ACC_DEPRECATED;
     if ((access & Opcodes.ACC_STATIC) != 0) {
       this.out.print("static ");
       access &= ~Opcodes.ACC_STATIC;
@@ -314,6 +315,7 @@ public class JavaFormatter extends CodeFormatter {
   @Override
   protected void writeField(@NotNull FieldNode fn) {
     this.out.println();
+    this.writeAnnotations(fn);
     this.writeIndent();
     if (fn.access == Constants.ACC_ENUM_VALUE) {
       this.out.print(fn.name);
@@ -415,6 +417,10 @@ public class JavaFormatter extends CodeFormatter {
       this.out.print("protected ");
       access &= ~Opcodes.ACC_PROTECTED;
     }
+    // For members (constructors/fields/methods), the deprecated status is assumed to be marked via @Deprecated, which is emitted
+    // separately. Alternatively, we could also adjust the annotation handling to not emit @Deprecated, and instead emit a fake
+    // 'deprecated' keyword here.
+    access &= ~Opcodes.ACC_DEPRECATED;
     if ((access & Opcodes.ACC_STATIC) != 0) {
       this.out.print("static ");
       access &= ~Opcodes.ACC_STATIC;
@@ -435,6 +441,7 @@ public class JavaFormatter extends CodeFormatter {
   @Override
   protected void writeMethod(@NotNull MethodNode mn) {
     this.out.println();
+    this.writeAnnotations(mn);
     this.writeIndent();
     final boolean varargs;
     {
@@ -541,6 +548,8 @@ public class JavaFormatter extends CodeFormatter {
       this.writeAnnotations(jp.info);
     }
     this.writeIndent();
+    // The access flags for a package do not matter - they are always 0x1600 (synthetic abstract interface); they don't even get the
+    // 'deprecated' bit set when they have @Deprecated on them.
     this.out.print("package ");
     this.writePackageName(jp);
     this.out.print(" {");
