@@ -469,9 +469,12 @@ public class JavaFormatter extends CodeFormatter {
         this.writeTypeParameters(signature.typeParameters);
         this.out.print(' ');
       }
-      // TODO: Handle annotations on the return type.
-      this.writeTypeName(signature.returnType);
-      this.out.print(' ');
+      // FIXME: For constructors, should we verify that the return type is declared as 'void'? Can it have (relevant) annotations?
+      if (!WellKnown.Names.CONSTRUCTOR.equals(mn.name)) {
+        // TODO: Handle annotations on the return type.
+        this.writeTypeName(signature.returnType);
+        this.out.print(' ');
+      }
       this.writeMethodName(mn.name);
       this.out.print('(');
       if (signature.parameterTypes != null) {
@@ -496,15 +499,18 @@ public class JavaFormatter extends CodeFormatter {
       }
     }
     else {
-      final var returnType = Type.getReturnType(mn.desc);
-      if (returnType != null) {
-        // TODO: Handle annotations on the return type.
-        this.writeTypeName(returnType);
+      // FIXME: For constructors, should we verify that the return type is declared as 'void'? Can it have (relevant) annotations?
+      if (!WellKnown.Names.CONSTRUCTOR.equals(mn.name)) {
+        final var returnType = Type.getReturnType(mn.desc);
+        if (returnType != null) {
+          // TODO: Handle annotations on the return type.
+          this.writeTypeName(returnType);
+        }
+        else {
+          throw new IllegalStateException("Method descriptor did not include a return type.");
+        }
+        this.out.print(' ');
       }
-      else {
-        throw new IllegalStateException("Method descriptor did not include a return type.");
-      }
-      this.out.print(' ');
       this.writeMethodName(mn.name);
       this.out.print('(');
       final var parameterTypes = Type.getArgumentTypes(mn.desc);
@@ -579,6 +585,26 @@ public class JavaFormatter extends CodeFormatter {
     this.out.print(jp.name.replace('/', '.'));
   }
 
+  @Override
+  protected void writeTypeName(@NotNull Type type) {
+    this.writeTypeName(type, false);
+  }
+
+  private void writeTypeName(@NotNull Type type, boolean varargs) {
+    String name = type.getClassName();
+    if (this.currentPackage != null) {
+      final var prefix = this.currentPackage.name.replace('/', '.');
+      final int prefixLength = prefix.length();
+      if (name.length() > prefixLength + 2 && name.startsWith(prefix) && name.charAt(prefixLength) == '.') {
+        name = name.substring(prefixLength + 1);
+      }
+    }
+    if (varargs && name.endsWith("[]")) {
+      name = name.substring(0, name.length() - 2) + "...";
+    }
+    this.out.print(name);
+  }
+
   private void writeTypeArgument(@Nullable TypeReference type) {
     if (type == null) {
       this.out.print('?');
@@ -631,26 +657,6 @@ public class JavaFormatter extends CodeFormatter {
     for (var i = 0; i < type.arrayDimensions; ++i) {
       this.out.print(varargs && i == type.arrayDimensions - 1 ? "..." : "[]");
     }
-  }
-
-  @Override
-  protected void writeTypeName(@NotNull Type type) {
-    this.writeTypeName(type, false);
-  }
-
-  private void writeTypeName(@NotNull Type type, boolean varargs) {
-    String name = type.getClassName();
-    if (this.currentPackage != null) {
-      final var prefix = this.currentPackage.name.replace('/', '.');
-      final int prefixLength = prefix.length();
-      if (name.length() > prefixLength + 2 && name.startsWith(prefix) && name.charAt(prefixLength) == '.') {
-        name = name.substring(prefixLength + 1);
-      }
-    }
-    if (varargs && name.endsWith("[]")) {
-      name = name.substring(0, name.length() - 2) + "...";
-    }
-    this.out.print(name);
   }
 
   private void writeTypeParameters(@NotNull FormalTypeParameter @Nullable [] typeParameters) {

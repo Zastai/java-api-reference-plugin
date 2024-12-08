@@ -3,6 +3,7 @@ package com.github.zastai.apiref.model;
 import com.github.zastai.apiref.internal.ASMUtil;
 import com.github.zastai.apiref.internal.Constants;
 import com.github.zastai.apiref.internal.Util;
+import com.github.zastai.apiref.internal.WellKnown;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
@@ -18,6 +19,10 @@ import java.util.TreeSet;
 
 /** A Java class. */
 public class JavaClass {
+
+  /** The (externally visible) constructors provided by the class. */
+  @NotNull
+  public final SortedSet<MethodNode> constructors;
 
   /** The loaded class contents. */
   @NotNull
@@ -72,10 +77,19 @@ public class JavaClass {
       this.fields = Collections.emptySortedSet();
     }
     if (cn.methods != null) {
+      this.constructors = new TreeSet<>(JavaClass::compare);
       this.methods = new TreeSet<>(JavaClass::compare);
-      cn.methods.stream().filter(mn -> JavaClass.isRelevant(cn, mn, verbose)).forEach(this.methods::add);
+      cn.methods.stream().filter(mn -> JavaClass.isRelevant(cn, mn, verbose)).forEach(mn -> {
+        if (WellKnown.Names.CONSTRUCTOR.equals(mn.name)) {
+          this.constructors.add(mn);
+        }
+        else {
+          this.methods.add(mn);
+        }
+      });
     }
     else {
+      this.constructors = Collections.emptySortedSet();
       this.methods = Collections.emptySortedSet();
     }
   }

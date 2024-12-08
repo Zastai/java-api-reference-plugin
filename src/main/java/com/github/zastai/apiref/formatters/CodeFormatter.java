@@ -221,6 +221,7 @@ public abstract class CodeFormatter {
    * <p>
    * This consists of:
    * <ol>
+   *   <li>Any constructors declared by the class (via {@link #writeConstructorList(Collection)}).</li>
    *   <li>Any fields declared by the class (via {@link #writeFieldList(Collection)}).</li>
    *   <li>Any methods declared by the class (via {@link #writeMethodList(Collection)}).</li>
    *   <li>Any types nested inside the class (via {@link #writeNestedClassList(Collection)}).</li>
@@ -230,6 +231,7 @@ public abstract class CodeFormatter {
    */
   protected void writeClassContents(@NotNull JavaClass jc) {
     // FIXME: We might need to pass the ClassNode through too.
+    this.writeConstructorList(jc.constructors);
     this.writeFieldList(jc.fields);
     this.writeMethodList(jc.methods);
     this.writeNestedClassList(jc.nestedClasses());
@@ -259,6 +261,58 @@ public abstract class CodeFormatter {
    * @param type The type.
    */
   protected abstract void writeClassName(@NotNull Type type);
+
+  /**
+   * Writes out a single constructor.
+   *
+   * @param mn The node for the constructor.
+   */
+  protected void writeConstructor(@NotNull MethodNode mn) {
+    // A constructor is just a method in the end.
+    this.writeMethod(mn);
+  }
+
+  /**
+   * Writes out a list of constructor; this consists of a header (via {@link #writeConstructorListHeader(Collection)}), its contents
+   * (via {@link #writeConstructorListContents(Collection)}), and a footer (via {@link #writeConstructorListFooter(Collection)}).
+   *
+   * @param list The methods.
+   */
+  protected void writeConstructorList(@NotNull Collection<MethodNode> list) {
+    if (list.isEmpty()) {
+      return;
+    }
+    this.writeConstructorListHeader(list);
+    this.writeConstructorListContents(list);
+    this.writeConstructorListFooter(list);
+  }
+
+  /**
+   * Writes out the contents of a list of constructors (via {@link #writeConstructor(MethodNode)}).
+   *
+   * @param list The list of constructors.
+   */
+  protected void writeConstructorListContents(@NotNull Collection<MethodNode> list) {
+    list.forEach(this::writeConstructor);
+  }
+
+  /**
+   * Writes out a footer for a list of constructors.
+   *
+   * @param list The list of constructors.
+   */
+  protected void writeConstructorListFooter(@NotNull Collection<MethodNode> list) {
+    // default: no footer
+  }
+
+  /**
+   * Writes out a header for a list of constructors.
+   *
+   * @param list The list of constructors.
+   */
+  protected void writeConstructorListHeader(@NotNull Collection<MethodNode> list) {
+    // default: no header
+  }
 
   /** Writes out the end of a set of enum values. */
   protected void writeEndOfEnumValues() {
